@@ -101,7 +101,7 @@ TRANSLATIONS = {
     }
 }
 
-# 3. إدارة شريط اللغة والتحويل من الإنجليزية للعربية
+# 3. إدارة شريط اللغة والتحويل المباشر
 if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'English'
 
@@ -177,7 +177,7 @@ with tab2:
         if submitted:
             # احتساب الدرجة الموزونة من 5
             weighted_score = (s1 * 0.45) + (s2 * 0.25) + (s3 * 0.20) + (s4 * 0.10)
-            # تحويلها لنسبة مئوية حسب المعادلة الوزارية (الدرجة الموزونة من 5 × 20)
+            # تحويلها لنسبة مئوية حسب المعادلة الوزارية
             kpi_percentage = weighted_score * 20.0
             
             st.markdown("---")
