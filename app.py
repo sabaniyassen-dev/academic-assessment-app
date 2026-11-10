@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
+import random
 
 # 1. إعدادات الصفحة
 st.set_page_config(
@@ -18,17 +19,26 @@ TRANSLATIONS = {
         'subtitle': "Aligned with UAE Higher Education Standards (CAA) & QFEmirates Framework",
         'auth_title': "🔐 Authentication / المصادقة",
         'tab_login': "Login",
-        'tab_register': "Register New Account",
+        'tab_register': "Register",
+        'tab_forgot': "Forgot Password",
         'user_label': "Username / اسم المستخدم:",
+        'email_label': "Email Address / البريد الإلكتروني:",
         'pass_label': "Password / الرقم السري:",
         'pass_confirm_label': "Confirm Password / تأكيد الرقم السري:",
         'role_select_reg': "Select Role / اختر الصلاحية:",
         'login_btn': "Login / دخول",
         'register_btn': "Register / إنشاء الحساب",
-        'login_error': "Invalid Username or Password. Please register first.",
+        'forgot_btn': "Send Reset Code / إرسال كود التحقق",
+        'verify_btn': "Reset Password / تحديث كلمة المرور",
+        'login_error': "Invalid Username or Password.",
         'reg_success': "Account created successfully! Please switch to Login.",
-        'reg_error_match': "Passwords do not match! Please re-enter.",
-        'reg_error_exist': "Username already exists. Choose another one.",
+        'reg_error_match': "Passwords do not match!",
+        'reg_error_exist': "Username already exists.",
+        'forgot_success': "Verification code sent to your email! (Demo Code: 1234)",
+        'code_label': "Enter 4-Digit Code / أدخل الكود المكون من 4 أرقام:",
+        'new_pass_label': "New Password / كلمة السر الجديدة:",
+        'reset_success': "Password updated successfully! Please login.",
+        'reset_error': "Invalid verification code.",
         'college_select': "🏛️ Select Faculty / College:",
         'colleges': [
             "Faculty of Media & Mass Communication",
@@ -71,19 +81,28 @@ TRANSLATIONS = {
     'العربية': {
         'title': "🎓 منصة جامعة المدينة عجمان لتحليل الاختبارات ومخرجات التعلم",
         'subtitle': "معتمدة ومطابقة لـ معايير هيئة الاعتماد الأكاديمي (CAA) وإطار المؤهلات الوطنية (QFEmirates)",
-        'auth_title': "🔐 بوابة الدخول وإنشاء الحسابات",
+        'auth_title': "🔐 بوابة الدخول، التسجيل واستعادة كلمة المرور",
         'tab_login': "تسجيل الدخول",
         'tab_register': "إنشاء حساب جديد",
+        'tab_forgot': "نسيت كلمة المرور",
         'user_label': "اسم المستخدم / Username:",
+        'email_label': "البريد الإلكتروني / Email:",
         'pass_label': "الرقم السري / Password:",
         'pass_confirm_label': "تأكيد الرقم السري / Confirm Password:",
         'role_select_reg': "اختر الصلاحية الأكاديمية:",
         'login_btn': "تسجيل الدخول",
         'register_btn': "إتمام التسجيل",
-        'login_error': "اسم المستخدم أو الرقم السري غير صحيح، أو يجب إنشاء حساب جديد أولاً.",
-        'reg_success': "تم إنشاء الحساب بنجاح! انتقل لتبويب تسجيل الدخول والدخول الآن.",
-        'reg_error_match': "كلمتا المرور غير متطابقتين! يرجى إعادة المحاولة.",
-        'reg_error_exist': "اسم المستخدم موجود مسبقاً، اختر اسم来的 آخر.",
+        'forgot_btn': "إرسال كود التحقق للإيميل",
+        'verify_btn': "إعادة تعيين كلمة المرور",
+        'login_error': "اسم المستخدم أو الرقم السري غير صحيح.",
+        'reg_success': "تم إنشاء الحساب بنجاح! انتقل لتبويب تسجيل الدخول.",
+        'reg_error_match': "كلمتا المرور غير متطابقتين!",
+        'reg_error_exist': "اسم المستخدم موجود مسبقاً.",
+        'forgot_success': "تم إرسال كود التحقق إلى بريدك الإلكتروني! (كود التجربة: 1234)",
+        'code_label': "أدخل كود التحقق (4 أرقام):",
+        'new_pass_label': "كلمة السر الجديدة:",
+        'reset_success': "تم تحديث كلمة المرور بنجاح! يرجى تسجيل الدخول بها.",
+        'reset_error': "كود التحقق غير صحيح.",
         'college_select': "🏛️ اختر الكلية الأكاديمية:",
         'colleges': [
             "كلية الإعلام والاتصال",
@@ -125,20 +144,22 @@ TRANSLATIONS = {
     }
 }
 
-# 3. إدارة حالة الحسابات المسجلة في الذاكرة المؤقتة
+# 3. إدارة قاعدة البيانات في الجلسة (Session State)
 if 'users_db' not in st.session_state:
-    # حسابات تجريبية جاهزة مسبقاً
     st.session_state['users_db'] = {
-        "dean": {"pass": "123456", "role": "Dean"},
-        "deputy": {"pass": "123456", "role": "Deputy Dean"},
-        "chair": {"pass": "123456", "role": "Department Chair"},
-        "instructor": {"pass": "123456", "role": "Course Instructor"}
+        "dean": {"pass": "123456", "email": "dean@cua.ac.ae", "role": "Dean"},
+        "deputy": {"pass": "123456", "email": "deputy@cua.ac.ae", "role": "Deputy Dean"},
+        "chair": {"pass": "123456", "email": "chair@cua.ac.ae", "role": "Department Chair"},
+        "instructor": {"pass": "123456", "email": "inst@cua.ac.ae", "role": "Course Instructor"}
     }
 
 if 'authenticated' not in st.session_state:
     st.session_state['authenticated'] = False
     st.session_state['username'] = ""
     st.session_state['user_role'] = ""
+
+if 'reset_step' not in st.session_state:
+    st.session_state['reset_step'] = 1  # 1: إدخال الإيميل، 2: إدخال الكود والباسورد الجديد
 
 with st.sidebar:
     try:
@@ -155,8 +176,9 @@ with st.sidebar:
     
     if not st.session_state['authenticated']:
         st.subheader(t['auth_title'])
-        auth_tab1, auth_tab2 = st.tabs([t['tab_login'], t['tab_register']])
+        auth_tab1, auth_tab2, auth_tab3 = st.tabs([t['tab_login'], t['tab_register'], t['tab_forgot']])
         
+        # 1. تبويب تسجيل الدخول
         with auth_tab1:
             login_user = st.text_input(t['user_label'], key="l_user")
             login_pass = st.text_input(t['pass_label'], type="password", key="l_pass")
@@ -170,22 +192,58 @@ with st.sidebar:
                 else:
                     st.error(t['login_error'])
         
+        # 2. تبويب إنشاء حساب جديد
         with auth_tab2:
             reg_user = st.text_input(t['user_label'], key="r_user")
+            reg_email = st.text_input(t['email_label'], key="r_email")
             reg_pass = st.text_input(t['pass_label'], type="password", key="r_pass")
             reg_pass_confirm = st.text_input(t['pass_confirm_label'], type="password", key="r_pass_conf")
             reg_role = st.selectbox(t['role_select_reg'], options=t['roles_list'])
             
             if st.button(t['register_btn']):
-                if not reg_user or not reg_pass:
+                if not reg_user or not reg_pass or not reg_email:
                     st.error("Please fill all fields.")
                 elif reg_pass != reg_pass_confirm:
                     st.error(t['reg_error_match'])
                 elif reg_user in st.session_state['users_db']:
                     st.error(t['reg_error_exist'])
                 else:
-                    st.session_state['users_db'][reg_user] = {"pass": reg_pass, "role": reg_role}
+                    st.session_state['users_db'][reg_user] = {
+                        "pass": reg_pass, 
+                        "email": reg_email, 
+                        "role": reg_role
+                    }
                     st.success(t['reg_success'])
+        
+        # 3. تبويب نسيت كلمة المرور (إرسال كود التحقق)
+        with auth_tab3:
+            forgot_user = st.text_input(t['user_label'], key="f_user")
+            forgot_email = st.text_input(t['email_label'], key="f_email")
+            
+            if st.session_state['reset_step'] == 1:
+                if st.button(t['forgot_btn']):
+                    if forgot_user in st.session_state['users_db'] and st.session_state['users_db'][forgot_user]["email"] == forgot_email:
+                        st.session_state['reset_step'] = 2
+                        st.session_state['temp_reset_user'] = forgot_user
+                        st.success(t['forgot_success'])
+                        st.rerun()
+                    else:
+                        st.error("Username or Email not found in records.")
+            
+            elif st.session_state['reset_step'] == 2:
+                entered_code = st.text_input(t['code_label'], key="f_code")
+                new_pass = st.text_input(t['new_pass_label'], type="password", key="f_new_pass")
+                
+                if st.button(t['verify_btn']):
+                    # كود التحقق الافتراضي للتجربة هو 1234
+                    if entered_code == "1234":
+                        target_user = st.session_state['temp_reset_user']
+                        st.session_state['users_db'][target_user]["pass"] = new_pass
+                        st.session_state['reset_step'] = 1
+                        st.success(t['reset_success'])
+                    else:
+                        st.error(t['reset_error'])
+
         st.stop()
     else:
         st.success(f"{t['welcome']} **{st.session_state['username']}** ({st.session_state['user_role']})")
