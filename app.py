@@ -1,15 +1,16 @@
 import streamlit as st
+
+# 1. التهوئة وإعدادات الصفحة (يجب أن تكون أول أمر في الكود)
+st.set_page_config(
+    page_title="Academic Assessment & CLO Platform",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
 import pandas as pd
 import numpy as np
 import plotly.express as px
 import plotly.graph_objects as go
-
-# 1. التهوئة وإعدادات الصفحة
-st.set_page_config(
-    page_title="Academic Assessment & CLO Platform",
-    page_layout="wide",
-    initial_sidebar_state="expanded"
-)
 
 # 2. قاموس اللغات (Translations Dictionary)
 TRANSLATIONS = {
