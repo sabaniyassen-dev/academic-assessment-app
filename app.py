@@ -16,11 +16,19 @@ TRANSLATIONS = {
     'English': {
         'title': "🎓 CUA Academic Assessment & CLO Analysis Platform",
         'subtitle': "Aligned with UAE Higher Education Standards (CAA) & QFEmirates Framework",
-        'login_header': "🔐 Secure Login / تسجيل الدخول",
-        'id_label': "Staff ID / الرقم الوظيفي:",
+        'auth_title': "🔐 Authentication / المصادقة",
+        'tab_login': "Login",
+        'tab_register': "Register New Account",
+        'user_label': "Username / اسم المستخدم:",
         'pass_label': "Password / الرقم السري:",
+        'pass_confirm_label': "Confirm Password / تأكيد الرقم السري:",
+        'role_select_reg': "Select Role / اختر الصلاحية:",
         'login_btn': "Login / دخول",
-        'login_error': "Invalid Staff ID or Password. Please check your credentials.",
+        'register_btn': "Register / إنشاء الحساب",
+        'login_error': "Invalid Username or Password. Please register first.",
+        'reg_success': "Account created successfully! Please switch to Login.",
+        'reg_error_match': "Passwords do not match! Please re-enter.",
+        'reg_error_exist': "Username already exists. Choose another one.",
         'college_select': "🏛️ Select Faculty / College:",
         'colleges': [
             "Faculty of Media & Mass Communication",
@@ -28,6 +36,12 @@ TRANSLATIONS = {
             "Faculty of Law",
             "Faculty of Education",
             "Faculty of Allied Health Sciences"
+        ],
+        'roles_list': [
+            "Dean / Executive Management",
+            "Deputy Dean",
+            "Department Chair",
+            "Course Instructor"
         ],
         'welcome': "Welcome, logged in as:",
         'tabs': {
@@ -57,11 +71,19 @@ TRANSLATIONS = {
     'العربية': {
         'title': "🎓 منصة جامعة المدينة عجمان لتحليل الاختبارات ومخرجات التعلم",
         'subtitle': "معتمدة ومطابقة لـ معايير هيئة الاعتماد الأكاديمي (CAA) وإطار المؤهلات الوطنية (QFEmirates)",
-        'login_header': "🔐 تسجيل الدخول الآمن للأطراف الأكاديمية",
-        'id_label': "الرقم الوظيفي / Staff ID:",
+        'auth_title': "🔐 بوابة الدخول وإنشاء الحسابات",
+        'tab_login': "تسجيل الدخول",
+        'tab_register': "إنشاء حساب جديد",
+        'user_label': "اسم المستخدم / Username:",
         'pass_label': "الرقم السري / Password:",
+        'pass_confirm_label': "تأكيد الرقم السري / Confirm Password:",
+        'role_select_reg': "اختر الصلاحية الأكاديمية:",
         'login_btn': "تسجيل الدخول",
-        'login_error': "الرقم الوظيفي أو الرمز السري غير صحيح. يرجى المحاولة مرة أخرى.",
+        'register_btn': "إتمام التسجيل",
+        'login_error': "اسم المستخدم أو الرقم السري غير صحيح، أو يجب إنشاء حساب جديد أولاً.",
+        'reg_success': "تم إنشاء الحساب بنجاح! انتقل لتبويب تسجيل الدخول والدخول الآن.",
+        'reg_error_match': "كلمتا المرور غير متطابقتين! يرجى إعادة المحاولة.",
+        'reg_error_exist': "اسم المستخدم موجود مسبقاً، اختر اسم来的 آخر.",
         'college_select': "🏛️ اختر الكلية الأكاديمية:",
         'colleges': [
             "كلية الإعلام والاتصال",
@@ -69,6 +91,12 @@ TRANSLATIONS = {
             "كلية القانون",
             "كلية التربية",
             "كلية العلوم الصحية المساندة"
+        ],
+        'roles_list': [
+            "العميد / الإدارة العليا",
+            "نائب العميد (Deputy Dean)",
+            "رئيس القسم الأكاديمي",
+            "أستاذ المساق"
         ],
         'welcome': "مرحباً بك، أنت مسجل بصلاحية:",
         'tabs': {
@@ -97,15 +125,21 @@ TRANSLATIONS = {
     }
 }
 
-# قاعدة بيانات الأمان والأدوار (اعتمدنا Deputy Dean حصرياً)
-VALID_USERS = {
-    "1001": {"pass": "dean123", "role": {"English": "Dean / Executive Management", "العربية": "العميد / الإدارة العليا"}},
-    "1002": {"pass": "deputy123", "role": {"English": "Deputy Dean", "العربية": "نائب العميد (Deputy Dean)"}},
-    "1003": {"pass": "chair123", "role": {"English": "Department Chair", "العربية": "رئيس القسم الأكاديمي"}},
-    "1004": {"pass": "inst123", "role": {"English": "Course Instructor", "العربية": "أستاذ المساق"}}
-}
+# 3. إدارة حالة الحسابات المسجلة في الذاكرة المؤقتة
+if 'users_db' not in st.session_state:
+    # حسابات تجريبية جاهزة مسبقاً
+    st.session_state['users_db'] = {
+        "dean": {"pass": "123456", "role": "Dean"},
+        "deputy": {"pass": "123456", "role": "Deputy Dean"},
+        "chair": {"pass": "123456", "role": "Department Chair"},
+        "instructor": {"pass": "123456", "role": "Course Instructor"}
+    }
 
-# 3. الشريط الجانبي ونظام المصادقة
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+    st.session_state['username'] = ""
+    st.session_state['user_role'] = ""
+
 with st.sidebar:
     try:
         st.image("cua_logo.png", use_container_width=True)
@@ -118,28 +152,43 @@ with st.sidebar:
     t = TRANSLATIONS[lang]
     
     st.markdown("---")
-    st.subheader(t['login_header'])
     
-    if 'authenticated' not in st.session_state:
-        st.session_state['authenticated'] = False
-        st.session_state['user_role'] = ""
-        st.session_state['user_id'] = ""
-
     if not st.session_state['authenticated']:
-        staff_id = st.text_input(t['id_label'], value="")
-        staff_pass = st.text_input(t['pass_label'], type="password", value="")
+        st.subheader(t['auth_title'])
+        auth_tab1, auth_tab2 = st.tabs([t['tab_login'], t['tab_register']])
         
-        if st.button(t['login_btn']):
-            if staff_id in VALID_USERS and VALID_USERS[staff_id]["pass"] == staff_pass:
-                st.session_state['authenticated'] = True
-                st.session_state['user_id'] = staff_id
-                st.session_state['user_role'] = VALID_USERS[staff_id]["role"][lang]
-                st.rerun()
-            else:
-                st.error(t['login_error'])
+        with auth_tab1:
+            login_user = st.text_input(t['user_label'], key="l_user")
+            login_pass = st.text_input(t['pass_label'], type="password", key="l_pass")
+            
+            if st.button(t['login_btn']):
+                if login_user in st.session_state['users_db'] and st.session_state['users_db'][login_user]["pass"] == login_pass:
+                    st.session_state['authenticated'] = True
+                    st.session_state['username'] = login_user
+                    st.session_state['user_role'] = st.session_state['users_db'][login_user]["role"]
+                    st.rerun()
+                else:
+                    st.error(t['login_error'])
+        
+        with auth_tab2:
+            reg_user = st.text_input(t['user_label'], key="r_user")
+            reg_pass = st.text_input(t['pass_label'], type="password", key="r_pass")
+            reg_pass_confirm = st.text_input(t['pass_confirm_label'], type="password", key="r_pass_conf")
+            reg_role = st.selectbox(t['role_select_reg'], options=t['roles_list'])
+            
+            if st.button(t['register_btn']):
+                if not reg_user or not reg_pass:
+                    st.error("Please fill all fields.")
+                elif reg_pass != reg_pass_confirm:
+                    st.error(t['reg_error_match'])
+                elif reg_user in st.session_state['users_db']:
+                    st.error(t['reg_error_exist'])
+                else:
+                    st.session_state['users_db'][reg_user] = {"pass": reg_pass, "role": reg_role}
+                    st.success(t['reg_success'])
         st.stop()
     else:
-        st.success(f"{t['welcome']} **{st.session_state['user_role']}** (ID: {st.session_state['user_id']})")
+        st.success(f"{t['welcome']} **{st.session_state['username']}** ({st.session_state['user_role']})")
         if st.button("Logout / تسجيل خروج"):
             st.session_state['authenticated'] = False
             st.rerun()
@@ -156,7 +205,7 @@ with st.sidebar:
 
 # 4. العنوان الرئيسي للمنصة
 st.title(t['title'])
-st.caption(f"{t['subtitle']} | 🏛️ **{college}** | 👤 **{st.session_state['user_role']}**")
+st.caption(f"{t['subtitle']} | 🏛️ **{college}** | 👤 **{st.session_state['username']}**")
 st.markdown("---")
 
 # 5. التبويبات الرئيسية
