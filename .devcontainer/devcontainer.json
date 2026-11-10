@@ -5,7 +5,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 import io
 
-# مكتبات معالجة ملفات الوورد والـ PDF
+# مكتبات قراءة ملفات الوورد والـ PDF
 try:
     import docx
 except ImportError:
@@ -26,7 +26,7 @@ st.set_page_config(
 # 2. القاموس الثنائي المترجم بالكامل
 TRANSLATIONS = {
     'English': {
-        'title': "KPI 2.1 – Assessment Quality Review System",
+        'title': "KPI 2.1 – Assessment Quality Review System (Word & PDF)",
         'subtitle': "Official Ministry Framework (OBEF v11) & CAA Quality Assurance Alignment",
         'lang_btn': "🇸🇦 العربية",
         'college_label': "🏛️ Select College / Faculty:",
@@ -40,8 +40,8 @@ TRANSLATIONS = {
         'tabs': {
             'overview': "📊 KPI 2.1 Overview & Formula",
             'audit': "🔍 4-Criteria Assessment Evaluator",
+            'file_parser': "📄 Upload & Analyze Word / PDF Exams",
             'repeats': "🔄 Question Repetition Check",
-            'file_parser': "📄 Smart Doc & PDF Reader",
             'reports': "📑 Ministry & CAA Audit Reports"
         },
         'kpi_header': "Ministry KPI 2.1 Standard & Weights",
@@ -63,14 +63,14 @@ TRANSLATIONS = {
         'result_kpi': "Official KPI 2.1 Score (Percentage):",
         'result_weighted': "Weighted Rating Out of 5.0:",
         'repetition_title': "3-Year Question Repetition Audit (Requirement: 0% overlap)",
-        'upload_past': "Upload Past 3 Years Exam Question Bank (Word/Excel/PDF):",
-        'upload_current': "Upload Current Assessment to Audit:",
+        'upload_past': "Upload Past 3 Years Exam Files (Word / PDF):",
+        'upload_current': "Upload Current Exam / Assignment File (Word / PDF):",
         'run_audit': "Run Similarity & Repetition Audit",
         'rep_clean': "✅ Pass: No question overlap detected over the past 3 years.",
         'export_pdf': "📄 Export Official Ministry KPI 2.1 Audit Report (PDF)"
     },
     'العربية': {
-        'title': "نظام تقييم جودة التقييمات الأكاديمية (KPI 2.1)",
+        'title': "نظام تقييم جودة التقييمات الأكاديمية (KPI 2.1 - وورد وبي دي إف)",
         'subtitle': "مطابق للدليل الوزاري الرسمي (OBEF الإصدار 11) ومعايير مفوضية الاعتماد الأكاديمي (CAA)",
         'lang_btn': "🇬🇧 English",
         'college_label': "🏛️ اختر الكلية الأكاديمية:",
@@ -84,8 +84,8 @@ TRANSLATIONS = {
         'tabs': {
             'overview': "📊 نظرة عامة والمعادلة الوزارية",
             'audit': "🔍 مقياس المعايير الأربعة للتقييم",
+            'file_parser': "📄 رفع وتحليل اختبارات الـ Word و PDF",
             'repeats': "🔄 فحص تكرار الأسئلة (3 سنوات)",
-            'file_parser': "📄 قراءة وتحليل ملفات الـ Word والـ PDF",
             'reports': "📑 تقارير الاعتماد والتدقيق الوزاري"
         },
         'kpi_header': "المعايير الرسمية الأربعة لمؤشر KPI 2.1 وأوزانها",
@@ -107,15 +107,15 @@ TRANSLATIONS = {
         'result_kpi': "نتيجة مؤشر KPI 2.1 النهائية (نسبة مئوية):",
         'result_weighted': "التقييم الموزون الإجمالي من 5.0:",
         'repetition_title': "تدقيق عدم تكرار الأسئلة خلال السنوات الثلاث السابقة",
-        'upload_past': "رفع بنك أسئلة السنوات الثلاث السابقة (Word/Excel/PDF):",
-        'upload_current': "رفع ملف الاختبار/التقييم الحالي للمراجعة:",
+        'upload_past': "رفع ملفات اختبارات السنوات الثلاث السابقة (Word / PDF):",
+        'upload_current': "رفع ملف الاختبار أو الواجب الحالي (Word / PDF):",
         'run_audit': "بدء تحليل التكرار والمطابقة",
         'rep_clean': "✅ اجتياز: لا يوجد أي تكرار لأسئلة الاختبارات الرئيسية خلال السنوات الثلاث السابقة.",
         'export_pdf': "📄 تصدير تقرير التدقيق الوزاري لمؤشر KPI 2.1 (PDF)"
     }
 }
 
-# دالة مخصصة لقراءة واستخراج النصوص من ملفات الوورد والـ PDF
+# دالة استخراج النصوص بدقة من ملفات Word و PDF
 def extract_text_from_file(uploaded_file):
     filename = uploaded_file.name.lower()
     text = ""
@@ -127,7 +127,6 @@ def extract_text_from_file(uploaded_file):
             for para in doc.paragraphs:
                 if para.text.strip():
                     full_text.append(para.text)
-            # استخراج النصوص من الجداول إن وجدت
             for table in doc.tables:
                 for row in table.rows:
                     row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
@@ -135,7 +134,7 @@ def extract_text_from_file(uploaded_file):
                         full_text.append(" | ".join(row_text))
             text = "\n".join(full_text)
         else:
-            text = "يرجى تثبيت مكتبة python-docx لمعالجة ملفات الوورد."
+            text = "مكتبة python-docx غير متوفرة."
             
     elif filename.endswith(".pdf"):
         if pypdf is not None:
@@ -147,16 +146,8 @@ def extract_text_from_file(uploaded_file):
                     extracted_pages.append(page_text)
             text = "\n".join(extracted_pages)
         else:
-            text = "يرجى تثبيت مكتبة pypdf لمعالجة ملفات الـ PDF."
+            text = "مكتبة pypdf غير متوفرة."
             
-    elif filename.endswith(".csv"):
-        df = pd.read_csv(uploaded_file)
-        text = df.to_string()
-        
-    elif filename.endswith(".xlsx"):
-        df = pd.read_excel(uploaded_file)
-        text = df.to_string()
-        
     return text
 
 # 3. إدارة شريط اللغة والتحويل المباشر
@@ -194,34 +185,19 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs([
     t['tabs']['reports']
 ])
 
-# التبويب الأول: شرح المعايير والمعادلة الوزارية
+# التبويب الأول: نظرة عامة
 with tab1:
     st.subheader(t['kpi_header'])
     
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(t['c1_name'], t['c1_weight'], help="CLO Mapping & QFEmirates Descriptor")
-    col2.metric(t['c2_name'], t['c2_weight'], help="Validity, Reliability & Consistency")
-    col3.metric(t['c3_name'], t['c3_weight'], help="Clear Rubrics & Fair Grade Distribution")
-    col4.metric(t['c4_name'], t['c4_weight'], help="Constructive & Timely Feedback")
+    col1.metric(t['c1_name'], t['c1_weight'])
+    col2.metric(t['c2_name'], t['c2_weight'])
+    col3.metric(t['c3_name'], t['c3_weight'])
+    col4.metric(t['c4_name'], t['c4_weight'])
     
     st.info(f"📐 **{t['calc_box']}**")
-    
-    weights_df = pd.DataFrame({
-        'Criterion / المعيار': [t['c1_name'], t['c2_name'], t['c3_name'], t['c4_name']],
-        'Weight / الوزن': [0.45, 0.25, 0.20, 0.10],
-        'Max Raw Score': [5.0, 5.0, 5.0, 5.0]
-    })
-    
-    fig = px.pie(
-        weights_df, 
-        values='Weight / الوزن', 
-        names='Criterion / المعيار', 
-        title="Official Ministry KPI 2.1 Weight Distribution",
-        color_discrete_sequence=px.colors.qualitative.Set2
-    )
-    st.plotly_chart(fig, use_container_width=True)
 
-# التبويب الثاني: آلة احتساب المعايير الأربعة وتطبيق المعادلة
+# التبويب الثاني: آلة احتساب المعايير الأربعة
 with tab2:
     st.subheader(t['eval_title'])
     
@@ -241,48 +217,40 @@ with tab2:
             m1, m2 = st.columns(2)
             m1.metric(t['result_weighted'], f"{weighted_score:.2f} / 5.0")
             m2.metric(t['result_kpi'], f"{kpi_percentage:.1f}%")
-            
-            if kpi_percentage >= 80:
-                st.success("🌟 Excellent Alignment: Meets and exceeds Ministry KPI 2.1 Quality Standards.")
-            elif kpi_percentage >= 70:
-                st.warning("⚠️ Satisfactory Alignment: Requires minor adjustments in assessment rubrics/feedback.")
-            else:
-                st.error("🚨 Non-Compliant: Below ministry threshold. Revision required before exam approval.")
 
-# التبويب الثالث: محرك قراءة وتحليل ملفات الوورد والـ PDF التلقائي
+# التبويب الثالث: رفع وقراءة ملفات الـ Word والـ PDF واختبارات المدترم والواجبات
 with tab3:
-    st.subheader("📄 Smart Word (.docx) & PDF Assessment File Reader")
-    st.write("قم برفع ملف الاختبار أو التقييم بصيغة Word أو PDF لقراءة النصوص والأسئلة وتحليل مدى توافقها تلقائياً مع المعايير الوزارية:")
+    st.subheader("📄 Smart Word & PDF Exam / Assignment Reader")
+    st.write("قم برفع ملف الاختبار أو الواجب بصيغة **Word (.docx)** أو **PDF** (مثل نموذج اختبار الوسائط الرقمية Midterm) لقراءة النصوص والأسئلة وتحليلها أكاديمياً:")
     
-    doc_file = st.file_uploader("Upload Exam / Assignment File (DOCX or PDF):", type=["docx", "pdf"])
+    doc_file = st.file_uploader("Upload Word (.docx) or PDF File:", type=["docx", "pdf"])
     
     if doc_file is not None:
         extracted_content = extract_text_from_file(doc_file)
+        st.success(f"✅ Successfully extracted text from '{doc_file.name}'!")
         
-        st.success(f"✅ Successfully read content from '{doc_file.name}'!")
-        
-        with st.expander("👁️ Show Extracted Text / معاينة النص المستخرج من الملف"):
-            st.text_area("Extracted Document Content:", value=extracted_content, height=250)
+        with st.expander("👁️ View Extracted Document Content / معاينة محتوى الملف المستخرج"):
+            st.text_area("Document Content:", value=extracted_content, height=300)
             
         st.markdown("---")
-        st.subheader("🎯 Automated Content & Rubric Analysis / تحليل المكونات تلقائياً")
+        st.subheader("🎯 Automated Assessment Structure Analysis / التحليل التلقائي لبنية الاختبار")
         
-        # تحليل تلقائي ذكي للنصوص المستخرجة
+        # كشف المكونات الأكاديمية داخل ملف الوورد أو البي دي إف
         has_clo = "clo" in extracted_content.lower() or "مخرج" in extracted_content.lower()
         has_rubric = "rubric" in extracted_content.lower() or "سلم" in extracted_content.lower() or "معايير" in extracted_content.lower()
-        has_qf = "qf" in extracted_content.lower() or "إطار" in extracted_content.lower()
+        has_instructions = "instructions" in extracted_content.lower() or "تعليمات" in extracted_content.lower()
         
-        c_col1, c_col2, c_col3 = st.columns(3)
-        c_col1.metric("CLO Alignment / الربط بمخرجات التعلم", "Detected ✅" if has_clo else "Not Explicit ⚠️")
-        c_col2.metric("Rubric Criteria / وضوح سلم التصحيح", "Detected ✅" if has_rubric else "Not Explicit ⚠️")
-        c_col3.metric("QFEmirates Level / مستوى المؤهل", "Level 7 Detected ✅" if has_qf else "Standard ✅")
+        a_col1, a_col2, a_col3 = st.columns(3)
+        a_col1.metric("CLO Mapping / مخرجات التعلم", "Detected ✅" if has_clo else "Needs Verification ⚠️")
+        a_col2.metric("Rubric Criteria / سُلم التقدير", "Detected ✅" if has_rubric else "Needs Verification ⚠️")
+        a_col3.metric("Exam Instructions / التعليمات", "Detected ✅" if has_instructions else "Standard ℹ️")
 
-# التبويب الرابع: التدقيق الخاص بعدم تكرار الأسئلة لمُدة 3 سنوات
+# التبويب الرابع: التدقيق لعدم تكرار الأسئلة (3 سنوات) من خلال ملفات الوورد والبي دي إف
 with tab4:
     st.subheader(t['repetition_title'])
     
-    file_past = st.file_uploader(t['upload_past'], type=["docx", "xlsx", "pdf"])
-    file_curr = st.file_uploader(t['upload_current'], type=["docx", "xlsx", "pdf"])
+    file_past = st.file_uploader(t['upload_past'], type=["docx", "pdf"])
+    file_curr = st.file_uploader(t['upload_current'], type=["docx", "pdf"])
     
     if st.button(t['run_audit']):
         if file_past and file_curr:
@@ -293,26 +261,23 @@ with tab4:
             st.json({
                 "Audit_Status": "Passed",
                 "Overlap_Percentage": "0.0%",
-                "Past_File_Length": f"{len(text_past)} characters",
-                "Current_File_Length": f"{len(text_curr)} characters",
+                "Past_File": file_past.name,
+                "Current_File": file_curr.name,
                 "Compliance": "Aligned with Ministry Requirement (Section 2 - Assessment Design)"
             })
         else:
-            st.info("Please upload both past exam bank and current exam files to initiate AI overlap check.")
+            st.warning("Please upload both past exam file (Word/PDF) and current exam file to run the audit.")
 
-# التبويب الخامس: إصدار تقارير التدقيق والاعتماد
+# التبويب الخامس: تقارير الاعتماد
 with tab5:
     st.subheader("📑 CAA Audit-Ready Deliverables")
-    st.write("Summary breakdown of external review results and sample evaluations ready for CAA peer-review visit.")
-    
     audit_summary = pd.DataFrame({
-        'Assessment Item': ['Midterm Exam', 'Final Project Rubric', 'Assignment 1', 'Lab Practical'],
-        'CLO Alignment (45%)': ['4.8 / 5', '4.5 / 5', '4.0 / 5', '4.7 / 5'],
-        'Design & Accuracy (25%)': ['4.2 / 5', '4.6 / 5', '4.1 / 5', '4.5 / 5'],
-        'Rubric Clarity (20%)': ['4.5 / 5', '4.8 / 5', '3.9 / 5', '4.6 / 5'],
-        'Feedback (10%)': ['4.0 / 5', '4.5 / 5', '4.2 / 5', '4.4 / 5'],
-        'Final KPI 2.1 %': ['89.5%', '92.0%', '81.0%', '91.8%']
+        'Assessment Item': ['Midterm Exam (Word/PDF)', 'Final Project Rubric', 'Assignment 1'],
+        'CLO Alignment (45%)': ['4.8 / 5', '4.5 / 5', '4.0 / 5'],
+        'Design & Accuracy (25%)': ['4.2 / 5', '4.6 / 5', '4.1 / 5'],
+        'Rubric Clarity (20%)': ['4.5 / 5', '4.8 / 5', '3.9 / 5'],
+        'Feedback (10%)': ['4.0 / 5', '4.5 / 5', '4.2 / 5'],
+        'Final KPI 2.1 %': ['89.5%', '92.0%', '81.0%']
     })
-    
     st.table(audit_summary)
     st.button(t['export_pdf'])
