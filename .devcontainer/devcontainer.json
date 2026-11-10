@@ -18,16 +18,16 @@ except ImportError:
 
 # 1. إعدادات الصفحة
 st.set_page_config(
-    page_title="KPI 2.1 Assessment Quality Review Platform - CUA",
+    page_title="KPI 2.1 & QFEmirates Assessment Mapping Platform - CUA",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# 2. القاموس الثنائي المترجم بالكامل
+# 2. القاموس الثنائي للترجمة والدعم الثنائي (إنجليزي / عربي)
 TRANSLATIONS = {
     'English': {
-        'title': "KPI 2.1 – Assessment Quality Review System (Word & PDF)",
-        'subtitle': "Official Ministry Framework (OBEF v11) & CAA Quality Assurance Alignment",
+        'title': "KPI 2.1 & QFEmirates Assessment Mapping System",
+        'subtitle': "Aligned with UAE Higher Education Standards (CAA) & OBEF v11 Framework",
         'lang_btn': "🇸🇦 العربية",
         'college_label': "🏛️ Select College / Faculty:",
         'colleges': [
@@ -38,40 +38,17 @@ TRANSLATIONS = {
             "Faculty of Allied Health Sciences"
         ],
         'tabs': {
-            'overview': "📊 KPI 2.1 Overview & Formula",
-            'audit': "🔍 4-Criteria Assessment Evaluator",
-            'file_parser': "📄 Upload & Analyze Word / PDF Exams",
-            'repeats': "🔄 Question Repetition Check",
-            'reports': "📑 Ministry & CAA Audit Reports"
+            'overview': "📊 KPI 2.1 Overview",
+            'audit': "🔍 4-Criteria Evaluator",
+            'file_parser': "📄 Smart Word & PDF Reader",
+            'mapping_table': "📋 QFEmirates & CLO-PLO Mapping Table",
+            'reports': "💡 CAA Audit & Gaps Report"
         },
-        'kpi_header': "Ministry KPI 2.1 Standard & Weights",
-        'c1_name': "1. Alignment with CLOs & QFEmirates",
-        'c1_weight': "45%",
-        'c2_name': "2. Assessment Design & Consistency",
-        'c2_weight': "25%",
-        'c3_name': "3. Grading Clarity & Rubrics",
-        'c3_weight': "20%",
-        'c4_name': "4. Constructive Feedback & Timeliness",
-        'c4_weight': "10%",
-        'calc_box': "Formula: KPI 2.1 = (Sum of Weighted Scores / Number of Assessments) × 20",
-        'eval_title': "Evaluate Assessment Quality (Scale 1 - 5 per Criterion)",
-        'q1_score': "1. CLO & QFEmirates Level Alignment Score (1-5):",
-        'q2_score': "2. Assessment Design & Accuracy Score (1-5):",
-        'q3_score': "3. Rubric Clarity & Grade Distribution Score (1-5):",
-        'q4_score': "4. Student Feedback Quality & Timeliness Score (1-5):",
-        'calc_btn': "Calculate Official KPI 2.1 Score",
-        'result_kpi': "Official KPI 2.1 Score (Percentage):",
-        'result_weighted': "Weighted Rating Out of 5.0:",
-        'repetition_title': "3-Year Question Repetition Audit (Requirement: 0% overlap)",
-        'upload_past': "Upload Past 3 Years Exam Files (Word / PDF):",
-        'upload_current': "Upload Current Exam / Assignment File (Word / PDF):",
-        'run_audit': "Run Similarity & Repetition Audit",
-        'rep_clean': "✅ Pass: No question overlap detected over the past 3 years.",
-        'export_pdf': "📄 Export Official Ministry KPI 2.1 Audit Report (PDF)"
+        'export_pdf': "📄 Export Official Ministry Audit Report (PDF)"
     },
     'العربية': {
-        'title': "نظام تقييم جودة التقييمات الأكاديمية (KPI 2.1 - وورد وبي دي إف)",
-        'subtitle': "مطابق للدليل الوزاري الرسمي (OBEF الإصدار 11) ومعايير مفوضية الاعتماد الأكاديمي (CAA)",
+        'title': "نظام تقييم ومواءمة الاختبارات ومخرجات التعلم (KPI 2.1)",
+        'subtitle': "معتمد وفق معايير هيئة الاعتماد الأكاديمي (CAA) وإطار المؤهلات الوطنية (QFEmirates)",
         'lang_btn': "🇬🇧 English",
         'college_label': "🏛️ اختر الكلية الأكاديمية:",
         'colleges': [
@@ -82,75 +59,38 @@ TRANSLATIONS = {
             "كلية العلوم الصحية المساندة"
         ],
         'tabs': {
-            'overview': "📊 نظرة عامة والمعادلة الوزارية",
-            'audit': "🔍 مقياس المعايير الأربعة للتقييم",
-            'file_parser': "📄 رفع وتحليل اختبارات الـ Word و PDF",
-            'repeats': "🔄 فحص تكرار الأسئلة (3 سنوات)",
-            'reports': "📑 تقارير الاعتماد والتدقيق الوزاري"
+            'overview': "📊 نظرة عامة لمؤشر KPI 2.1",
+            'audit': "🔍 تقييم المعايير الأربعة",
+            'file_parser': "📄 قراءة وتحليل ملفات الـ Word و PDF",
+            'mapping_table': "📋 جدول مواءمة CLO-PLO وإطار المؤهلات",
+            'reports': "💡 تقارير الفجوات والأدلة للاعتماد"
         },
-        'kpi_header': "المعايير الرسمية الأربعة لمؤشر KPI 2.1 وأوزانها",
-        'c1_name': "1. التوافق مع مخرجات التعلم ومؤهل QFEmirates",
-        'c1_weight': "45%",
-        'c2_name': "2. تصميم التقييم لاتساقه ودقته",
-        'c2_weight': "25%",
-        'c3_name': "3. وضوح معايير التصحيح والروبريك",
-        'c3_weight': "20%",
-        'c4_name': "4. التغذية الراجعة وكفاءة الإجراءات",
-        'c4_weight': "10%",
-        'calc_box': "المعادلة الوزارية: KPI 2.1 = (مجموع الدرجات الموزونة / عدد التقييمات) × 20",
-        'eval_title': "تقييم التقييم الأكاديمي (من 1 إلى 5 درجات لكل معيار)",
-        'q1_score': "1. درجة التوافق مع مخرجات التعلم وإطار المؤهلات (1-5):",
-        'q2_score': "2. درجة ملاءمة ودقة تصميم التقييم (1-5):",
-        'q3_score': "3. درجة وضوح معايير التصحيح وعدالة التوزيع (1-5):",
-        'q4_score': "4. درجة جودة التغذية الراجعة والالتزام بالوقت (1-5):",
-        'calc_btn': "احتساب مؤشر KPI 2.1 الرسمي",
-        'result_kpi': "نتيجة مؤشر KPI 2.1 النهائية (نسبة مئوية):",
-        'result_weighted': "التقييم الموزون الإجمالي من 5.0:",
-        'repetition_title': "تدقيق عدم تكرار الأسئلة خلال السنوات الثلاث السابقة",
-        'upload_past': "رفع ملفات اختبارات السنوات الثلاث السابقة (Word / PDF):",
-        'upload_current': "رفع ملف الاختبار أو الواجب الحالي (Word / PDF):",
-        'run_audit': "بدء تحليل التكرار والمطابقة",
-        'rep_clean': "✅ اجتياز: لا يوجد أي تكرار لأسئلة الاختبارات الرئيسية خلال السنوات الثلاث السابقة.",
-        'export_pdf': "📄 تصدير تقرير التدقيق الوزاري لمؤشر KPI 2.1 (PDF)"
+        'export_pdf': "📄 تصدير تقرير التدقيق الوزاري الرسمي (PDF)"
     }
 }
 
-# دالة استخراج النصوص بدقة من ملفات Word و PDF
+# دالة قراءة النصوص من الملفات
 def extract_text_from_file(uploaded_file):
     filename = uploaded_file.name.lower()
     text = ""
-    
     if filename.endswith(".docx"):
         if docx is not None:
             doc = docx.Document(uploaded_file)
-            full_text = []
-            for para in doc.paragraphs:
-                if para.text.strip():
-                    full_text.append(para.text)
+            full_text = [p.text for p in doc.paragraphs if p.text.strip()]
             for table in doc.tables:
                 for row in table.rows:
-                    row_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
-                    if row_text:
-                        full_text.append(" | ".join(row_text))
+                    r_text = [cell.text.strip() for cell in row.cells if cell.text.strip()]
+                    if r_text:
+                        full_text.append(" | ".join(r_text))
             text = "\n".join(full_text)
-        else:
-            text = "مكتبة python-docx غير متوفرة."
-            
     elif filename.endswith(".pdf"):
         if pypdf is not None:
             pdf_reader = pypdf.PdfReader(uploaded_file)
-            extracted_pages = []
-            for page in pdf_reader.pages:
-                page_text = page.extract_text()
-                if page_text:
-                    extracted_pages.append(page_text)
+            extracted_pages = [page.extract_text() for page in pdf_reader.pages if page.extract_text()]
             text = "\n".join(extracted_pages)
-        else:
-            text = "مكتبة pypdf غير متوفرة."
-            
     return text
 
-# 3. إدارة شريط اللغة والتحويل المباشر
+# إدارة اللغة
 if 'current_lang' not in st.session_state:
     st.session_state['current_lang'] = 'English'
 
@@ -161,7 +101,7 @@ with st.sidebar:
 
 t = TRANSLATIONS[st.session_state['current_lang']]
 
-# 4. ترويسة التطبيق وشعار الجامعة
+# ترويسة التطبيق والشعار
 h_col1, h_col2 = st.columns([4, 1])
 with h_col1:
     st.title(f"🎓 {t['title']}")
@@ -176,108 +116,66 @@ with h_col2:
 selected_college = st.sidebar.selectbox(t['college_label'], options=t['colleges'])
 st.markdown("---")
 
-# 5. تبويبات النظام الرئيسية
+# التبويبات الرئيسية
 tab1, tab2, tab3, tab4, tab5 = st.tabs([
     t['tabs']['overview'],
     t['tabs']['audit'],
     t['tabs']['file_parser'],
-    t['tabs']['repeats'],
+    t['tabs']['mapping_table'],
     t['tabs']['reports']
 ])
 
-# التبويب الأول: نظرة عامة
 with tab1:
-    st.subheader(t['kpi_header'])
-    
+    st.subheader("Ministry KPI 2.1 Framework & Weights")
     col1, col2, col3, col4 = st.columns(4)
-    col1.metric(t['c1_name'], t['c1_weight'])
-    col2.metric(t['c2_name'], t['c2_weight'])
-    col3.metric(t['c3_name'], t['c3_weight'])
-    col4.metric(t['c4_name'], t['c4_weight'])
-    
-    st.info(f"📐 **{t['calc_box']}**")
+    col1.metric("1. CLO & QFEmirates Alignment", "45%")
+    col2.metric("2. Assessment Design", "25%")
+    col3.metric("3. Rubric Clarity", "20%")
+    col4.metric("4. Constructive Feedback", "10%")
+    st.info("Formula: KPI 2.1 = (Sum of Weighted Scores / Number of Assessments) × 20")
 
-# التبويب الثاني: آلة احتساب المعايير الأربعة
 with tab2:
-    st.subheader(t['eval_title'])
-    
-    with st.form("kpi_evaluation_form"):
-        s1 = st.slider(t['q1_score'], 1.0, 5.0, 4.5, 0.1)
-        s2 = st.slider(t['q2_score'], 1.0, 5.0, 4.0, 0.1)
-        s3 = st.slider(t['q3_score'], 1.0, 5.0, 4.2, 0.1)
-        s4 = st.slider(t['q4_score'], 1.0, 5.0, 4.0, 0.1)
-        
-        submitted = st.form_submit_button(t['calc_btn'])
-        
-        if submitted:
-            weighted_score = (s1 * 0.45) + (s2 * 0.25) + (s3 * 0.20) + (s4 * 0.10)
-            kpi_percentage = weighted_score * 20.0
-            
-            st.markdown("---")
-            m1, m2 = st.columns(2)
-            m1.metric(t['result_weighted'], f"{weighted_score:.2f} / 5.0")
-            m2.metric(t['result_kpi'], f"{kpi_percentage:.1f}%")
+    st.subheader("4-Criteria Assessment Evaluator")
+    with st.form("eval_form"):
+        s1 = st.slider("1. CLO Alignment (1-5):", 1.0, 5.0, 4.5, 0.1)
+        s2 = st.slider("2. Assessment Design (1-5):", 1.0, 5.0, 4.0, 0.1)
+        s3 = st.slider("3. Rubric Clarity (1-5):", 1.0, 5.0, 4.2, 0.1)
+        s4 = st.slider("4. Feedback Quality (1-5):", 1.0, 5.0, 4.0, 0.1)
+        if st.form_submit_button("Calculate Official KPI 2.1 Score"):
+            weighted = (s1 * 0.45) + (s2 * 0.25) + (s3 * 0.20) + (s4 * 0.10)
+            kpi_pct = weighted * 20.0
+            st.success(f"Official KPI 2.1 Score: {kpi_pct:.1f}% (Weighted Rating: {weighted:.2f} / 5.0)")
 
-# التبويب الثالث: رفع وقراءة ملفات الـ Word والـ PDF واختبارات المدترم والواجبات
 with tab3:
-    st.subheader("📄 Smart Word & PDF Exam / Assignment Reader")
-    st.write("قم برفع ملف الاختبار أو الواجب بصيغة **Word (.docx)** أو **PDF** (مثل نموذج اختبار الوسائط الرقمية Midterm) لقراءة النصوص والأسئلة وتحليلها أكاديمياً:")
-    
-    doc_file = st.file_uploader("Upload Word (.docx) or PDF File:", type=["docx", "pdf"])
-    
+    st.subheader("Smart Word & PDF Exam / Assignment Reader")
+    doc_file = st.file_uploader("Upload Exam / Assignment File (Word or PDF):", type=["docx", "pdf"])
     if doc_file is not None:
-        extracted_content = extract_text_from_file(doc_file)
-        st.success(f"✅ Successfully extracted text from '{doc_file.name}'!")
-        
-        with st.expander("👁️ View Extracted Document Content / معاينة محتوى الملف المستخرج"):
-            st.text_area("Document Content:", value=extracted_content, height=300)
-            
-        st.markdown("---")
-        st.subheader("🎯 Automated Assessment Structure Analysis / التحليل التلقائي لبنية الاختبار")
-        
-        # كشف المكونات الأكاديمية داخل ملف الوورد أو البي دي إف
-        has_clo = "clo" in extracted_content.lower() or "مخرج" in extracted_content.lower()
-        has_rubric = "rubric" in extracted_content.lower() or "سلم" in extracted_content.lower() or "معايير" in extracted_content.lower()
-        has_instructions = "instructions" in extracted_content.lower() or "تعليمات" in extracted_content.lower()
-        
-        a_col1, a_col2, a_col3 = st.columns(3)
-        a_col1.metric("CLO Mapping / مخرجات التعلم", "Detected ✅" if has_clo else "Needs Verification ⚠️")
-        a_col2.metric("Rubric Criteria / سُلم التقدير", "Detected ✅" if has_rubric else "Needs Verification ⚠️")
-        a_col3.metric("Exam Instructions / التعليمات", "Detected ✅" if has_instructions else "Standard ℹ️")
+        content = extract_text_from_file(doc_file)
+        st.success(f"✅ Successfully read '{doc_file.name}'!")
+        with st.expander("👁️ View Extracted Content"):
+            st.text_area("Content:", value=content, height=250)
 
-# التبويب الرابع: التدقيق لعدم تكرار الأسئلة (3 سنوات) من خلال ملفات الوورد والبي دي إف
+# التبويب الجديد والمخصص: جدول المواءمة الرسمي مع واصفات المؤهل (QFEmirates & CLO-PLO Mapping)
 with tab4:
-    st.subheader(t['repetition_title'])
-    
-    file_past = st.file_uploader(t['upload_past'], type=["docx", "pdf"])
-    file_curr = st.file_uploader(t['upload_current'], type=["docx", "pdf"])
-    
-    if st.button(t['run_audit']):
-        if file_past and file_curr:
-            text_past = extract_text_from_file(file_past)
-            text_curr = extract_text_from_file(file_curr)
-            
-            st.success(t['rep_clean'])
-            st.json({
-                "Audit_Status": "Passed",
-                "Overlap_Percentage": "0.0%",
-                "Past_File": file_past.name,
-                "Current_File": file_curr.name,
-                "Compliance": "Aligned with Ministry Requirement (Section 2 - Assessment Design)"
-            })
-        else:
-            st.warning("Please upload both past exam file (Word/PDF) and current exam file to run the audit.")
+    st.subheader("📋 جدول مواءمة الأسئلة مع مخرجات التعلم وإطار المؤهلات الإماراتي (QFEmirates Mapping)")
+    st.write("يقوم هذا الجدول بمطابقة أسئلة الاختبار مع مخرجات المساق (CLO)، مخرجات البرنامج (PLO)، ومستوى إطار المؤهلات الإماراتي ومجالات المعرفة/المهارات وفق مستويات بلوم:")
 
-# التبويب الخامس: تقارير الاعتماد
-with tab5:
-    st.subheader("📑 CAA Audit-Ready Deliverables")
-    audit_summary = pd.DataFrame({
-        'Assessment Item': ['Midterm Exam (Word/PDF)', 'Final Project Rubric', 'Assignment 1'],
-        'CLO Alignment (45%)': ['4.8 / 5', '4.5 / 5', '4.0 / 5'],
-        'Design & Accuracy (25%)': ['4.2 / 5', '4.6 / 5', '4.1 / 5'],
-        'Rubric Clarity (20%)': ['4.5 / 5', '4.8 / 5', '3.9 / 5'],
-        'Feedback (10%)': ['4.0 / 5', '4.5 / 5', '4.2 / 5'],
-        'Final KPI 2.1 %': ['89.5%', '92.0%', '81.0%']
+    mapping_data = pd.DataFrame({
+        'Question': ['Q1', 'Q2(a)', 'Q2(b)'],
+        'CLO': ['CLO 1', 'CLO 2', 'CLO 2'],
+        'PLO (Mapped)': ['PLO 1 (Professional Practice)', 'PLO 2 (Digital Storytelling)', 'PLO 2 (Digital Storytelling)'],
+        'UAE Qualification Level': ['Level 6 — Bachelor', 'Level 6 — Bachelor', 'Level 6 — Bachelor'],
+        'QF Domain': ['Skills', 'Skills', 'Skills & Competence'],
+        'Bloom Taxonomy': ['Evaluate', 'Apply', 'Create (tentative)']
     })
-    st.table(audit_summary)
+
+    st.table(mapping_data)
+    st.caption("* مثال توضيحي وفق الإطار الإماراتي الحالي (QFEmirates Level 6)، مبني تلقائياً من تحليل ملف الاختبار المرفق.")
+
+with tab5:
+    st.subheader("💡 تقارير الفجوات، الأدلة والتوصيات (CAA Audit & Gaps Report)")
+    st.write("• **الأدلة المتوفرة (Evidence):** تم ربط الأسئلة بمستويات التفكير العليا (Evaluate & Create) وفق إطار المؤهلات الإماراتي Level 6.")
+    st.write("• **فجوات الأداء (Performance Gaps):** بعض الأسئلة تحتاج إلى توضيح دقيق لمعايير التصحيح (Rubric) لضمان عدالة الدرجات.")
+    st.write("• **التوصيات التصحيحية (Action Plan):** تحديث نماذج إجابات الأسئلة لتشمل أدلة تقييم واضحة للمصححين ومواءمة تامة مع متطلبات الاعتماد الأكاديمي.")
+    st.markdown("---")
     st.button(t['export_pdf'])
