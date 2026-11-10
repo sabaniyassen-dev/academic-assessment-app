@@ -1,56 +1,379 @@
+import streamlit as st
 import pandas as pd
+import numpy as np
+import plotly.express as px
+import plotly.graph_objects as go
+import io
 
-def evaluate_student_submission(student_answer: str, question_type: str, max_marks: float) -> dict:
-    """
-    تقييم إجابة الطالب أو الواجب بناءً على مخرجات التعلم ومعايير السلم (Rubrics)
-    """
-    score = 0.0
-    feedback = ""
-    evidence_found = False
+# 1. إعدادات الصفحة
+st.set_page_config(
+    page_title="CUA Academic Assessment & CLO Platform",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-    if question_type == "CLO1_Evaluation":
-        # معايير تقييم السؤال الأول (Visual Appeal, Functionality, Usability, Accessibility, Performance, Standards)
-        keywords = ["visual", "function", "usability", "access", "performance", "standard", "button", "screen reader"]
-        matches = sum(1 for kw in keywords if kw in student_answer.lower())
-        
-        if matches >= 5:
-            score = max_marks * 1.0  # ممتاز (Excellent)
-            feedback = "تقييم ممتاز: تم تغطية كافة معايير التقييم المطلوبة مع أدلة واضحة من الحالة."
-        elif matches >= 3:
-            score = max_marks * 0.75 # جيد جداً / جيد
-            feedback = "تقييم جيد: تم رصد معظم المعايير، ولكن ينقص بعض الأدلة الداعمة."
-        elif matches >= 1:
-            score = max_marks * 0.4  # مقبول
-            feedback = "تقييم ضعيف/مقبول: تم التطرق لمعيار أو معيارين بحد أدنى."
-        else:
-            score = 0.0
-            feedback = "ضعيف جداً: لم يتم ربط الإجابة بمعايير التقييم المطلوبة."
+# 2. القاموس الثنائي للترجمة
+TRANSLATIONS = {
+    'English': {
+        'title': "Academic Assessment & CLO Analysis Platform",
+        'subtitle': "Aligned with UAE Higher Education Standards (CAA) & QFEmirates Framework",
+        'auth_title': "🔐 Authentication / المصادقة",
+        'tab_login': "Login",
+        'tab_register': "Register",
+        'tab_forgot': "Forgot Password",
+        'user_label': "Username / اسم المستخدم:",
+        'email_label': "Email Address / البريد الإلكتروني:",
+        'pass_label': "Password / الرقم السري:",
+        'pass_confirm_label': "Confirm Password / تأكيد الرقم السري:",
+        'role_select_reg': "Select Role / اختر الصلاحية:",
+        'login_btn': "Login / دخول",
+        'register_btn': "Register / إنشاء الحساب",
+        'forgot_btn': "Send Reset Code / إرسال كود التحقق",
+        'verify_btn': "Reset Password / تحديث كلمة المرور",
+        'login_error': "Invalid Username or Password.",
+        'reg_success': "Account created successfully! Please switch to Login.",
+        'reg_error_match': "Passwords do not match!",
+        'reg_error_exist': "Username already exists.",
+        'forgot_success': "Verification code sent to your email! (Demo Code: 1234)",
+        'code_label': "Enter 4-Digit Code / أدخل الكود المكون من 4 أرقام:",
+        'new_pass_label': "New Password / كلمة السر الجديدة:",
+        'reset_success': "Password updated successfully! Please login.",
+        'reset_error': "Invalid verification code.",
+        'college_select': "🏛️ Select Faculty / College:",
+        'colleges': [
+            "Faculty of Media & Mass Communication",
+            "Faculty of Business Administration",
+            "Faculty of Law",
+            "Faculty of Education",
+            "Faculty of Allied Health Sciences"
+        ],
+        'roles_list': [
+            "Dean / Executive Management",
+            "Deputy Dean",
+            "Department Chair",
+            "Course Instructor"
+        ],
+        'welcome': "Welcome, logged in as:",
+        'tabs': {
+            'input': "📊 Course & Data Setup",
+            'upload': "📁 Import Exam / Grades (Word, PDF, Excel)",
+            'clo': "🎯 CLO & Bloom's Analysis",
+            'reports': "💡 Smart Accreditation Reports"
+        },
+        'course_info': "Course Information & Rubric Setup",
+        'course_name': "Course Name:",
+        'course_code': "Course Code:",
+        'students_cnt': "Number of Enrolled Students:",
+        'bloom_dist': "Bloom's Taxonomy Distribution in Assessments (%)",
+        'bloom_levels': ['Remember', 'Understand', 'Apply', 'Analyze', 'Evaluate', 'Create'],
+        'upload_section': "📁 Upload Exam Papers, Assignments, or Grades (Word, PDF, Excel, CSV)",
+        'upload_help': "Upload exam rubrics, Word/PDF question files, or student submission grades to evaluate against CLOs.",
+        'data_preview': "Preview Uploaded Content & Rubric Assessment:",
+        'clo_perf': "Course Learning Outcomes (CLO) Performance Analysis",
+        'recommendations': "💡 Smart Audit & Accreditation Recommendations",
+        'instructor_plan': "Course Improvement Plan (For Instructor):",
+        'strengths': "Strengths:",
+        'gaps': "Performance Gaps:",
+        'actions': "Continuous Improvement Plan:",
+        'qa_audit': "Quality Assurance & CAA Alignment Note:",
+        'export_pdf': "📄 Export CAA Audit Report (PDF)"
+    },
+    'العربية': {
+        'title': "منصة تحليل الاختبارات ومخرجات التعلم",
+        'subtitle': "معتمدة ومطابقة لـ معايير هيئة الاعتماد الأكاديمي (CAA) وإطار المؤهلات الوطنية (QFEmirates)",
+        'auth_title': "🔐 بوابة الدخول، التسجيل واستعادة كلمة المرور",
+        'tab_login': "تسجيل الدخول",
+        'tab_register': "إنشاء حساب جديد",
+        'tab_forgot': "نسيت كلمة المرور",
+        'user_label': "اسم المستخدم / Username:",
+        'email_label': "البريد الإلكتروني / Email:",
+        'pass_label': "الرقم السري / Password:",
+        'pass_confirm_label': "تأكيد الرقم السري / Confirm Password:",
+        'role_select_reg': "اختر الصلاحية الأكاديمية:",
+        'login_btn': "تسجيل الدخول",
+        'register_btn': "إتمام التسجيل",
+        'forgot_btn': "إرسال كود التحقق للإيميل",
+        'verify_btn': "إعادة تعيين كلمة المرور",
+        'login_error': "اسم المستخدم أو الرقم السري غير صحيح.",
+        'reg_success': "تم إنشاء الحساب بنجاح! انتقل لتبويب تسجيل الدخول.",
+        'reg_error_match': "كلمتا المرور غير متطابقتين!",
+        'reg_error_exist': "اسم المستخدم موجود مسبقاً.",
+        'forgot_success': "تم إرسال كود التحقق إلى بريدك الإلكتروني! (كود التجربة: 1234)",
+        'code_label': "أدخل كود التحقق (4 أرقام):",
+        'new_pass_label': "كلمة السر الجديدة:",
+        'reset_success': "تم تحديث كلمة المرور بنجاح! يرجى تسجيل الدخول بها.",
+        'reset_error': "كود التحقق غير صحيح.",
+        'college_select': "🏛️ اختر الكلية الأكاديمية:",
+        'colleges': [
+            "كلية الإعلام والاتصال",
+            "كلية إدارة الأعمال",
+            "كلية القانون",
+            "كلية التربية",
+            "كلية العلوم الصحية المساندة"
+        ],
+        'roles_list': [
+            "العميد / الإدارة العليا",
+            "نائب العميد (Deputy Dean)",
+            "رئيس القسم الأكاديمي",
+            "أستاذ المساق"
+        ],
+        'welcome': "مرحباً بك، أنت مسجل بصلاحية:",
+        'tabs': {
+            'input': "📊 بيانات المساق والإعداد اليدوي",
+            'upload': "📁 استيراد ملفات الاختبارات والدرجات (Word, PDF, Excel)",
+            'clo': "🎯 تحليلات CLO ومستويات بلوم",
+            'reports': "💡 التوصيات والتقارير الذكية"
+        },
+        'course_info': "بيانات المساق ومعايير السلم (Rubrics)",
+        'course_name': "اسم المساق:",
+        'course_code': "رمز المساق:",
+        'students_cnt': "عدد الطلاب المسجلين:",
+        'bloom_dist': "توزيع أسئلة الاختبارات على مستويات بلوم (%)",
+        'bloom_levels': ['التذكر', 'الفهم', 'التطبيق', 'التحليل', 'التقييم', 'الابتكار'],
+        'upload_section': "📁 رفع نماذج الاختبارات، الواجبات أو درجات الطلاب (Word, PDF, Excel, CSV)",
+        'upload_help': "قم برفع ملفات نماذج الأسئلة (Word/PDF) أو درجات الواجبات لتقييمها بناءً على مخرجات التعلم (CLOs).",
+        'data_preview': "معاينة الملف المرفوع والتحليل القائم على المعايير السلمية (Rubrics):",
+        'clo_perf': "تحليل أداء مخرجات التعلم (CLOs)",
+        'recommendations': "💡 التوصيات والتقارير الذكية الموجهة لجمهور لجان الاعتماد",
+        'instructor_plan': "توصيات خاصة بأستاذ المساق (Course Improvement Plan):",
+        'strengths': "مواطن القوة:",
+        'gaps': "فجوة الأداء (Gaps):",
+        'actions': "الخطط التصحيحية (Continuous Improvement):",
+        'qa_audit': "ملاحظات جودة ومطابقة CAA لرئيس القسم:",
+        'export_pdf': "📄 تصدير تقرير التقييم الاعتمادي (PDF)"
+    }
+}
 
-    elif question_type == "CLO2_Motion_Design":
-        # معايير تقييم مبادئ التصميم الحركي (Timing, Easing, Transitions, Visual Rhythm)
-        principles = ["timing", "easing", "transition", "rhythm", "speed", "attention", "emotion"]
-        matches = sum(1 for p in principles if p in student_answer.lower())
-        
-        if matches >= 4:
-            score = max_marks * 1.0
-            feedback = "تطبيق ممتاز لمبادئ الحركة وتأثيرها على انتباه وفهم المشاهد."
-        elif matches >= 2:
-            score = max_marks * 0.6
-            feedback = "تطبيق مقبول لمبادئ الحركة مع قصور في ربطها بتأثيرها العاطفي أو البصري."
-        else:
-            score = max_marks * 0.2
-            feedback = "ضعف في توظيف مبادئ التصميم الحركي."
-
-    return {
-        "Earned_Marks": round(score, 2),
-        "Max_Marks": max_marks,
-        "Feedback": feedback
+# 3. قاعدة بيانات الجلسة
+if 'users_db' not in st.session_state:
+    st.session_state['users_db'] = {
+        "dean": {"pass": "123456", "email": "dean@cua.ac.ae", "role": "Dean"},
+        "deputy": {"pass": "123456", "email": "deputy@cua.ac.ae", "role": "Deputy Dean"},
+        "chair": {"pass": "123456", "email": "chair@cua.ac.ae", "role": "Department Chair"},
+        "instructor": {"pass": "123456", "email": "inst@cua.ac.ae", "role": "Course Instructor"}
     }
 
-# مثال عملي لتجربة تقييم إجابة طالب:
-sample_answer = "The app has good visual appeal and colors, but functionality fails because booking buttons do not work. Usability is poor due to broken navigation symbols, and accessibility fails screen readers. Performance is slow."
-result = evaluate_student_submission(sample_answer, "CLO1_Evaluation", 10)
+if 'authenticated' not in st.session_state:
+    st.session_state['authenticated'] = False
+    st.session_state['username'] = ""
+    st.session_state['user_role'] = ""
 
-print("--- نتيجة التقييم الذكي بناءً على المخرجات والمعايير ---")
-print(f"الدرجة المستحقة: {result['Earned_Marks']} / {result['Max_Marks']}")
-print(f"ملاحظات التقييم والتحليل: {result['Feedback']}")ر
+if 'reset_step' not in st.session_state:
+    st.session_state['reset_step'] = 1
+
+with st.sidebar:
+    lang = st.selectbox("🌐 Language / اختر اللغة", options=['English', 'العربية'], index=1)
+    t = TRANSLATIONS[lang]
+    
+    st.markdown("---")
+    
+    if not st.session_state['authenticated']:
+        st.subheader(t['auth_title'])
+        auth_tab1, auth_tab2, auth_tab3 = st.tabs([t['tab_login'], t['tab_register'], t['tab_forgot']])
+        
+        with auth_tab1:
+            login_user = st.text_input(t['user_label'], key="l_user")
+            login_pass = st.text_input(t['pass_label'], type="password", key="l_pass")
+            
+            if st.button(t['login_btn']):
+                if login_user in st.session_state['users_db'] and st.session_state['users_db'][login_user]["pass"] == login_pass:
+                    st.session_state['authenticated'] = True
+                    st.session_state['username'] = login_user
+                    st.session_state['user_role'] = st.session_state['users_db'][login_user]["role"]
+                    st.rerun()
+                else:
+                    st.error(t['login_error'])
+        
+        with auth_tab2:
+            reg_user = st.text_input(t['user_label'], key="r_user")
+            reg_email = st.text_input(t['email_label'], key="r_email")
+            reg_pass = st.text_input(t['pass_label'], type="password", key="r_pass")
+            reg_pass_confirm = st.text_input(t['pass_confirm_label'], type="password", key="r_pass_conf")
+            reg_role = st.selectbox(t['role_select_reg'], options=t['roles_list'])
+            
+            if st.button(t['register_btn']):
+                if not reg_user or not reg_pass or not reg_email:
+                    st.error("Please fill all fields.")
+                elif reg_pass != reg_pass_confirm:
+                    st.error(t['reg_error_match'])
+                elif reg_user in st.session_state['users_db']:
+                    st.error(t['reg_error_exist'])
+                else:
+                    st.session_state['users_db'][reg_user] = {
+                        "pass": reg_pass, 
+                        "email": reg_email, 
+                        "role": reg_role
+                    }
+                    st.success(t['reg_success'])
+        
+        with auth_tab3:
+            forgot_user = st.text_input(t['user_label'], key="f_user")
+            forgot_email = st.text_input(t['email_label'], key="f_email")
+            
+            if st.session_state['reset_step'] == 1:
+                if st.button(t['forgot_btn']):
+                    if forgot_user in st.session_state['users_db'] and st.session_state['users_db'][forgot_user]["email"] == forgot_email:
+                        st.session_state['reset_step'] = 2
+                        st.session_state['temp_reset_user'] = forgot_user
+                        st.success(t['forgot_success'])
+                        st.rerun()
+                    else:
+                        st.error("Username or Email not found in records.")
+            
+            elif st.session_state['reset_step'] == 2:
+                entered_code = st.text_input(t['code_label'], key="f_code")
+                new_pass = st.text_input(t['new_pass_label'], type="password", key="f_new_pass")
+                
+                if st.button(t['verify_btn']):
+                    if entered_code == "1234":
+                        target_user = st.session_state['temp_reset_user']
+                        st.session_state['users_db'][target_user]["pass"] = new_pass
+                        st.session_state['reset_step'] = 1
+                        st.success(t['reset_success'])
+                    else:
+                        st.error(t['reset_error'])
+
+        st.stop()
+    else:
+        st.success(f"{t['welcome']} **{st.session_state['username']}** ({st.session_state['user_role']})")
+        if st.button("Logout / تسجيل خروج"):
+            st.session_state['authenticated'] = False
+            st.rerun()
+
+    st.markdown("---")
+    college = st.selectbox(t['college_select'], options=t['colleges'])
+    
+    st.markdown("---")
+    qf_level = st.selectbox(
+        "Course Level (QFEmirates):",
+        options=["Level 7 (Bachelor)", "Level 9 (Master)", "Level 10 (Doctorate)"],
+        index=1
+    )
+
+# 4. ترويسة الصفحة الرئيسية مع عرض شعار الجامعة في أعلى اليسار
+header_col1, header_col2 = st.columns([4, 1])
+
+with header_col1:
+    st.title(f"🎓 {t['title']}")
+    st.caption(f"{t['subtitle']} | 🏛️ **{college}** | 👤 **{st.session_state['username']}**")
+
+with header_col2:
+    try:
+        st.image("cua_logo.png", use_container_width=True)
+    except:
+        st.write("🏛️ CUA")
+
+st.markdown("---")
+
+# 5. التبويبات الرئيسية
+tab1, tab2, tab3, tab4 = st.tabs([
+    t['tabs']['input'], 
+    t['tabs']['upload'], 
+    t['tabs']['clo'], 
+    t['tabs']['reports']
+])
+
+with tab1:
+    st.subheader(t['course_info'])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        c_name = st.text_input(t['course_name'], value="Introduction to Digital Media")
+    with col2:
+        c_code = st.text_input(t['course_code'], value="DIG-201")
+    with col3:
+        std_num = st.number_input(t['students_cnt'], min_value=1, value=30)
+        
+    st.markdown("---")
+    st.subheader(t['bloom_dist'])
+    b_cols = st.columns(6)
+    bloom_vals = []
+    default_vals = [15, 20, 25, 20, 10, 10]
+    for i, level in enumerate(t['bloom_levels']):
+        with b_cols[i]:
+            val = st.number_input(level, min_value=0, max_value=100, value=default_vals[i])
+            bloom_vals.append(val)
+
+with tab2:
+    st.subheader(t['upload_section'])
+    st.info(t['upload_help'])
+    
+    # دعم رفع ملفات متعددة (Word, PDF, Excel, CSV)
+    exam_file = st.file_uploader("Upload Exam / Assignment / Rubric File (Word, PDF, Excel, CSV)", type=["docx", "pdf", "xlsx", "csv"])
+    
+    if exam_file is not None:
+        file_extension = exam_file.name.split('.')[-1].lower()
+        st.success(f"✅ File '{exam_file.name}' uploaded successfully!")
+        
+        if file_extension in ['xlsx', 'csv']:
+            try:
+                if file_extension == 'csv':
+                    df = pd.read_csv(exam_file)
+                else:
+                    df = pd.read_excel(exam_file)
+                st.write(t['data_preview'])
+                st.dataframe(df.head(10))
+            except Exception as e:
+                st.error(f"Error reading spreadsheet: {e}")
+                
+        elif file_extension in ['docx', 'pdf']:
+            st.info("📄 Document (Word/PDF) detected. Analyzing alignment with CLOs and Rubrics...")
+            # محاكاة تحليل قوالب الأسئلة ومواءمتها مع مخرجات التعلم
+            rubric_analysis = pd.DataFrame({
+                'Question / السؤال': ['Question 1 (UX/UI Evaluation)', 'Question 2 (Motion Design & Story)'],
+                'Associated CLO / مخرجات التعلم': ['CLO 1: Evaluate UX, UI & IxD', 'CLO 2: Motion Design & Story Structure'],
+                'Max Marks / الدرجة': [10, 10],
+                'Rubric Assessment Criteria / معايير السلم': ['Case Evidence & Recommendations', 'Timing, Easing & 3-Part Structure'],
+                'Alignment Status / حالة المطابقة': ['Aligned with CAA', 'Aligned with QFEmirates Level 7']
+            })
+            st.table(rubric_analysis)
+    else:
+        sample_template = pd.DataFrame({
+            'Question_ID': ['Q1', 'Q2(a)', 'Q2(b)'],
+            'CLO_Mapped': ['CLO 1', 'CLO 2', 'CLO 2'],
+            'Max_Marks': [10, 5, 5],
+            'Evaluation_Criteria': ['Visual Appeal, Functionality, Usability', 'Motion Design Principles', 'Three-Part Story Structure']
+        })
+        st.write("📋 **Exam Rubric & CLO Mapping Template / نموذج مواءمة الأسئلة ومخرجات التعلم:**")
+        st.dataframe(sample_template)
+
+with tab3:
+    st.subheader(t['clo_perf'])
+    
+    fig_bloom = px.bar(
+        x=t['bloom_levels'],
+        y=bloom_vals,
+        labels={'x': 'Bloom Level', 'y': '%'},
+        title="Bloom's Taxonomy Distribution" if lang == 'English' else "توزيع مستويات تصنيف بلوم",
+        color=bloom_vals,
+        color_continuous_scale="Blues"
+    )
+    st.plotly_chart(fig_bloom, use_container_width=True)
+    
+    clos = ['CLO 1 (UX/UI & IxD)', 'CLO 2 (Motion Design & Story)']
+    scores = [85, 78]
+    fig_clo = px.bar(
+        x=clos,
+        y=scores,
+        title="CLO Achievement Rates (%)" if lang == 'English' else "نسب تحقيق مخرجات التعلم (%)",
+        labels={'x': 'CLO', 'y': 'Achievement (%)'},
+        color=scores,
+        color_continuous_scale="RdYlGn"
+    )
+    fig_clo.add_hline(y=70, line_dash="dash", line_color="red", annotation_text="Target Threshold (70%)")
+    st.plotly_chart(fig_clo, use_container_width=True)
+
+with tab4:
+    st.subheader(t['recommendations'])
+    
+    st.info(f"📌 {t['instructor_plan']}")
+    st.write(f"• **{t['strengths']}** " + ("Strong alignment with CLO 1 evaluation criteria and evidence-based case judgments." if lang == 'English' else "التزام ممتاز بمعايير تقييم CLO 1 وتقديم الأدلة المستخرجة من الحالات."))
+    st.write(f"• **{t['gaps']}** " + ("Slight variation in applying motion design principles (CLO 2) to narrative timing." if lang == 'English' else "تفاوت طفيف في توظيف مبادئ التصميم الحركي (CLO 2) والزمن السردي."))
+    st.write(f"• **{t['actions']}** " + ("Incorporate interactive prototyping workshops and formative feedback rubrics." if lang == 'English' else "إدماج ورش عمل حول النماذج التفاعلية ومعايير السلم التكويني."))
+    
+    st.markdown("---")
+    st.warning(f"🛡️ {t['qa_audit']}")
+    st.write("• " + ("Ensure question rubrics directly assess higher-order thinking (Bloom's Apply & Analyze)." if lang == 'English' else "التأكد من تقييم الأسئلة لمهارات التفكير العليا وفق مستويات بلوم (التطبيق والتحليل)."))
+    st.write("• " + ("Maintain assessment artifacts ready for CAA external peer review audit." if lang == 'English' else "الاحتفاظ بأدلة التقييم جاهزة لعمليات المراجعة والتدقيق الخارجية من هيئة الاعتماد الأكاديمي."))
+    
+    st.markdown("---")
+    st.button(t['export_pdf'])
